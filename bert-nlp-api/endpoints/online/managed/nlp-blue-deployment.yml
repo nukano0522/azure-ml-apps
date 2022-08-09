@@ -1,0 +1,13 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: myapi
+endpoint_name: bertendpoint
+model:
+  path: ../model/
+code_configuration:
+  code: ../src/
+  scoring_script: score_bert.py
+environment: 
+  conda_file: ../environment/conda.yml
+  image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210727.v1
+instance_type: Standard_DS2_v2
+instance_count: 1
