@@ -55,7 +55,7 @@ def run(raw_data):
     print(f"Batch Size: {batch['ids'][0].size()}")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"device: {device}")
-    inputs = batch["ids"][0].to(device)  # 文章
+    inputs = batch["ids"][0].to(device)  # 単語ID列
 
     # 推論の実行
     print("Infer is processing ...")
@@ -63,10 +63,21 @@ def run(raw_data):
     print("... Complete.")
     
     _, preds = torch.max(outputs, 1)  # ラベルを予測
+    print(f"preds: {preds}")
 
-    pred_num = preds.to('cpu').detach().numpy()[0]
-    print(f"pred_num: {pred_num}")
+    preds_num = preds.to('cpu').detach().numpy()
+    print(f"preds_num: {preds_num}")
 
-    # result = model.predict(data)
+    # レスポンスデータ
+    results = []
+    for i, p in enumerate(preds_num):
+        res = {}
+        # res["text"] = batch["text"][i][0:20] + "..."
+        # tmp["pred"] = current_app.config["ID2LABEL"][p]
+        res["pred_label"] = str(p)
+        results.append(res)
+
+    # results = json.dumps(results, ensure_ascii=False)
+
     logging.info("Request processed")
-    return {"pred_num": str(pred_num)}
+    return {"results": results}
