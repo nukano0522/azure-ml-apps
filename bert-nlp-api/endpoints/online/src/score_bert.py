@@ -10,11 +10,10 @@ from transformers import BertJapaneseTokenizer, BertModel
 
 def init():
     """
-    This function is called when the container is initialized/started, typically after create/update of the deployment.
-    You can write the logic here to perform init operations like caching the model in memory
+    デプロイ時に実行される関数
     """
 
-    # BERTモデル
+    # BERTトークナイザー、学習済みモデル、自作モデル
     global tokenizer
     global pretrained_bert 
     global model
@@ -23,23 +22,22 @@ def init():
     pretrained_bert = BertModel.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking", output_attentions=False, output_hidden_states=False)
     model = BertModelForLivedoor(pretrained_bert)
 
-    # AZUREML_MODEL_DIR is an environment variable created during deployment.
-    # It is the path to the model folder (./azureml-models/$MODEL_NAME/$VERSION)
-    # Please provide your model's folder name if there is one
+    # AZUREML_MODEL_DIRはデプロイ時に作成される環境変数（yamlで指定）
     model_path = os.path.join(
         os.getenv("AZUREML_MODEL_DIR"), "model/single_bert_fine_tuning_livedoor.pth"
     )
     print("Loading model ...")
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    if torch.cuda.is_available():
+        model.load_state_dict(torch.load(model_path))
+    else:
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     print("... Complete.")
     logging.info("Init complete")
 
 
 def run(raw_data):
     """
-    This function is called for every invocation of the endpoint to perform the actual scoring/prediction.
-    In the example we extract the data from the json input and call the scikit-learn model's predict()
-    method and return the result back
+    エンドポイントが呼び出されると実行される関数
     """
     logging.info("model 1: request received")
     data = json.loads(raw_data)["data"]
