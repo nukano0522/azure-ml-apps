@@ -17,7 +17,9 @@ az ml online-endpoint create --local -n $ENDPOINT_NAME -f endpoints/online/manag
 
 ### ローカルのエンドポイントにデプロイ
 az ml online-deployment create --local -n blue --endpoint $ENDPOINT_NAME -f endpoints/online/managed/nlp-blue-deployment.yml
-※デプロイが完了するとinit()が自動で実行される
+- デプロイが完了するとinit()が自動で実行される
+- 初回は（conda.yamlを更新した場合も）時間がかかる（20~30分ほど）
+
 
 - デプロイを更新する場合はaz ml online-deployment update
 az ml online-deployment update --local -n blue --endpoint $ENDPOINT_NAME -f endpoints/online/managed/nlp-blue-deployment.yml

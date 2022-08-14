@@ -1,22 +1,29 @@
-import os
+import os, sys
 import logging
 import json
+import jsonschema
 import numpy
 import torch
 from bert_model import BertModelForLivedoor
 from preprocess import text_to_loader
 from transformers import BertJapaneseTokenizer, BertModel
-
+from flask import request, abort
+# from json_validate import validate_json, validate_schema
+from werkzeug.exceptions import BadRequest
 
 def init():
     """
     デプロイ時に実行される関数
     """
-
     # BERTトークナイザー、学習済みモデル、自作モデル
     global tokenizer
     global pretrained_bert 
     global model
+    global json_schema
+    # JSON-Schemaの読み込み
+    with open("./config/check_file_schema.json", "r") as f:
+        json_schema = json.load(f)
+    logging.info("Json-Schema is loaded")
 
     tokenizer = BertJapaneseTokenizer.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking")
     pretrained_bert = BertModel.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking", output_attentions=False, output_hidden_states=False)
@@ -35,12 +42,33 @@ def init():
     logging.info("Init complete")
 
 
+# @validate_schema(json_schema)
 def run(raw_data):
     """
     エンドポイントが呼び出されると実行される関数
     """
-    logging.info("model 1: request received")
-    data = json.loads(raw_data)["data"]
+    logging.info("bert_score_model: request received")
+
+    # JSONのバリデーションチェック
+    ctype = request.headers.get('Content-Type') # application/json
+    method = request.headers.get('X-HTTP-Method-Override', request.method) # POST
+    if method.lower() == request.method.lower() and "json" in ctype:
+        try:
+            # bodyメッセージの有無をチェック
+            request.json
+        except BadRequest as e:
+            abort(400, {"error_message": f"Invalid JSON - {e.message}"})
+        
+    # リクエスト
+    req = json.loads(raw_data)
+
+    try:
+        jsonschema.validate(req, json_schema)
+    except jsonschema.ValidationError as e:
+        abort(400, {"error_message": f"Invalid JSON - {e.message}"})
+        # print(f"Invalid JSON - {e.message}")
+    
+    data = req["data"]
 
     # データローダに変換
     dataloader = text_to_loader(data, tokenizer)
