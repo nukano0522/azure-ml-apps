@@ -1,21 +1,40 @@
 # AzureMchineLearningを使った機械学習(BERT)API
 
 ## 環境
+- Windows10
+- VSCode
 
-## Docerのインストール
+## 参考資料
+https://docs.microsoft.com/ja-jp/azure/machine-learning/how-to-deploy-managed-online-endpoints
+
+## 前提
+- Azureのサブスクリプションとリソースグループと、AzureMLのワークスペースが必要
+- AzureCLI（コマンドベース）でエンドポイント作成やデプロイを行うため、AzureCLIとml拡張機能のインストールが必要
+- AzureCLIの既定値の設定推奨（何度もパラメータ渡さなくてすむように）
+```
+az account set --subscription <subscription ID>
+az configure --defaults workspace=<Azure Machine Learning workspace name> group=<resource group>
+```
+
+## 手順
+
+### AzureCLIとml拡張機能のインストール
+https://docs.microsoft.com/ja-jp/azure/machine-learning/how-to-configure-cli?tabs=public
+
+### Dockerのインストール（ローカルの動作確認に必要）
 https://docs.docker.com/engine/install/
 
-## ローカルのDockerにデプロイ
-### 既定の設定を確認
+### ローカルのDockerにデプロイ
+#### 既定の設定を確認
 az configure -l -o table
 
-### エンドポイント名の環境変数を設定
+#### エンドポイント名の環境変数を設定
 export ENDPOINT_NAME=bertendpoint
 
-### ローカルにエンドポイントを作成
+#### ローカルにエンドポイントを作成
 az ml online-endpoint create --local -n $ENDPOINT_NAME -f endpoints/online/managed/endpoint.yml
 
-### ローカルのエンドポイントにデプロイ
+#### ローカルのエンドポイントにデプロイ
 az ml online-deployment create --local -n blue --endpoint $ENDPOINT_NAME -f endpoints/online/managed/nlp-blue-deployment.yml
 - デプロイが完了するとinit()が自動で実行される
 - 初回は（conda.yamlを更新した場合も）時間がかかる（20~30分ほど）
